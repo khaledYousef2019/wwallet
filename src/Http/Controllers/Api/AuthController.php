@@ -11,6 +11,7 @@ use MyCode\Helpers\ArrayHelpers;
 use MyCode\Rules\RecordExist;
 use MyCode\Services\Events;
 use MyCode\Services\JwtToken;
+use MyCode\Services\SessionTable;
 use MyCode\Services\Validator;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -20,14 +21,11 @@ use Symfony\Component\Validator\Constraints\Type;
 
 class AuthController
 {
-//    protected $service;
-//    function __construct()
-//    {
-//        $this->service = new AuthService();
-//    }
-
     public function loginHandler(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
+        global $app;
+        $container = $app->getContainer();
+
         $data = $request->getParsedBody();
 //         $response->getBody()->write(json_encode(['data' => $data]));
 //         return $response;
@@ -38,7 +36,6 @@ class AuthController
             $response->getBody()->write(json_encode(['error' => 'Failed to authenticate: ' . $e->getMessage()]));
             return $response;
         }
-
         $user = User::where('email', $data['email'])->first();
 
         if (!$user || !password_verify($data['password'], $user->password)) {
@@ -51,7 +48,6 @@ class AuthController
 
         Events::dispatch(new UserLogin($user));
 
-        // You may include additional data in the response if needed
         $responseData = [
             'message' => 'Login successful',
             'user_id' => $user->id,
@@ -62,6 +58,13 @@ class AuthController
                 useLimit: 1
             )->token
         ];
+        $session = $request->getAttribute('session');
+
+        $session_table = SessionTable::getInstance();
+        $session_table->set($session['id'], [
+            'id' => $session['id'],
+            'user_id' => $user->id,
+        ]);
         $response->getBody()->write(json_encode(['data' => $responseData]));
         return $response;
     }
@@ -88,13 +91,5 @@ class AuthController
             ],
         ]);
     }
-
-//    function generateJwtToken($userId) {
-//        $payload = [
-//            'user_id' => $userId,
-//            'exp' => time() + 3600 // Token expires in 1 hour
-//        ];
-//        return \Firebase\JWT\JWT::encode($payload, $yourSecretKey);
-//    }
 
 }

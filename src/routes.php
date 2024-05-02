@@ -33,7 +33,7 @@ return function (App $app) {
     $app->group('/api/', function (RouteCollectorProxy $group) {
         $group->post('login', ApiAuthController::class . ':loginHandler')->setName('login-handler');
 
-        $group->get('user-dashboard-app', DashboardController::class . ':userDashboardApp');
+        $group->get('dashboard', DashboardController::class . ':index');
 
 
     })->add(new SessionMiddleware);
