@@ -1,0 +1,43 @@
+{
+    "require": {
+        "php": "^8.1",
+        "league/plates": "^3.4",
+        "slim/slim": "4.*",
+        "ilexn/swoole-convert-psr7": "^0.6.0",
+        "nyholm/psr7": "^1.5",
+        "vlucas/phpdotenv": "^5.4",
+        "ramsey/uuid": "^4.1",
+        "psr/simple-cache": "^3",
+        "nesbot/carbon": "^2.48",
+        "lotharthesavior/chocookies": "^0.0",
+        "monolog/monolog": "^2.5",
+        "php-di/slim-bridge": "^3.2",
+        "php-di/php-di": "^6.3",
+        "illuminate/database": "^9.10",
+        "symfony/console": "^6.0",
+        "firebase/php-jwt": "^6.2",
+        "symfony/validator": "^6.1",
+        "league/flysystem": "^3.1",
+        "mustache/mustache": "^2.14",
+        "symfony/password-hasher": "^6.1",
+        "openswoole/core": "22.1.5"
+    },
+    "require-dev": {
+        "swoole/ide-helper": "@dev",
+        "nekofar/slim-test": "^2.0",
+        "phpunit/phpunit": "^9.5",
+        "codedungeon/phpunit-result-printer": "^0.32.0",
+        "mockery/mockery": "^1.5",
+        "fakerphp/faker": "^1.19",
+        "symfony/var-dumper": "^6.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "MyCode\\": "src/",
+            "Tests\\": "tests/"
+        },
+        "files": [
+            "src/Helpers/coreconstants.php"
+        ]
+    }
+}
