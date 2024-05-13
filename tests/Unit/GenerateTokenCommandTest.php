@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use MyCode\DB\Models\User;
+use App\DB\Models\User;
 use Nekofar\Slim\Test\Traits\AppTestTrait;
 use Symfony\Component\Console\Tester\CommandTester;
 use Tests\TestCase;

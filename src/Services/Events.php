@@ -1,8 +1,8 @@
 <?php
 
-namespace MyCode\Services;
+namespace App\Services;
 
-use MyCode\Events\EventInterface;
+use App\Events\EventInterface;
 use Swoole\Timer;
 
 class Events

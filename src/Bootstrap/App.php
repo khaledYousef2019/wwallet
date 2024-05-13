@@ -1,20 +1,20 @@
 <?php
 
-namespace MyCode\Bootstrap;
+namespace App\Bootstrap;
 
 use DI\Container;
 use Ilex\SwoolePsr7\SwooleServerRequestConverter;
-use MyCode\Commands\GenerateFactory;
-use MyCode\Commands\GenerateJwtToken;
-use MyCode\Commands\HttpServer;
-use MyCode\Commands\Migrate;
-use MyCode\Commands\Seed;
-use MyCode\Commands\WebSocketServer;
-use MyCode\Events\EventInterface;
-use MyCode\Events\UserLogin;
-use MyCode\Events\UserLoginFail;
-use MyCode\Events\UserLogout;
-use MyCode\Services\Events;
+use App\Commands\GenerateFactory;
+use App\Commands\GenerateJwtToken;
+use App\Commands\HttpServer;
+use App\Commands\Migrate;
+use App\Commands\Seed;
+use App\Commands\WebSocketServer;
+use App\Events\EventInterface;
+use App\Events\UserLogin;
+use App\Events\UserLoginFail;
+use App\Events\UserLogout;
+use App\Services\Events;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Slim\App as SlimApp;
 use Slim\Routing\RouteCollectorProxy;

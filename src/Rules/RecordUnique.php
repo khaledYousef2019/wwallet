@@ -4,16 +4,12 @@ namespace App\Rules;
 
 use Symfony\Component\Validator\Constraint;
 
-/**
- * @Annotation
- */
-class RecordExist extends Constraint
+class RecordUnique extends Constraint
 {
-    public $message = 'The record doesn\'t exists at "{{ model }}".';
-    public $mode = 'strict'; // If the constraint has configuration options, define them as public properties
+    public mixed $message = 'The record exists at "{{ model }}".';
+    public string $mode = 'strict'; // If the constraint has configuration options, define them as public properties
 
-    public $input;
-
+    public array $input;
     public function __construct(
         array $input,
         string $message = null,

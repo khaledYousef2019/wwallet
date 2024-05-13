@@ -1,10 +1,10 @@
 <?php
 
-namespace MyCode\Http\Middlewares;
+namespace App\Http\Middlewares;
 
 use Exception;
-use MyCode\DB\User;
-use MyCode\Services\Session;
+use App\DB\User;
+use App\Services\Session;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 

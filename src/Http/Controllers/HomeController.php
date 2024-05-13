@@ -1,6 +1,6 @@
 <?php
 
-namespace MyCode\Http\Controllers;
+namespace App\Http\Controllers;
 
 use League\Plates\Engine;
 use Psr\Container\ContainerInterface;

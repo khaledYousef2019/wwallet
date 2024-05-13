@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use Faker\Factory;
-use MyCode\DB\Models\User;
+use App\DB\Models\User;
 use Tests\TestCase;
 use Tests\Traits\SwooleAppTestTrait;
 

@@ -21,8 +21,8 @@ class LoginTest extends TestCase
     private function successfullLogin(): TestResponse
     {
         return $this->post('/login', [
-            'email' => 'savio@example.com',
-            'password' => 'secret',
+            'email' => 'khaled@example.com',
+            'password' => 'khaled123',
         ]);
     }
 
@@ -64,7 +64,7 @@ class LoginTest extends TestCase
     public function test_cant_login_with_wrong_credentials(): void
     {
         $response = $this->post('/login', [
-            'email' => 'savio@example.com',
+            'email' => 'khaled@example.com',
             'password' => 'wrongpass',
         ]);
         $response->assertStatus(302);

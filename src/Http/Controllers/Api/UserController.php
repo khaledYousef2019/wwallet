@@ -1,15 +1,15 @@
 <?php
 
-namespace MyCode\Http\Controllers\Api;
+namespace App\Http\Controllers\Api;
 
 use Exception;
 use League\Plates\Engine;
-use MyCode\DB\Models\User;
-use MyCode\Rules\RecordExist;
-use MyCode\Services\Hash;
-use MyCode\Services\Resource;
-use MyCode\Services\SessionTable;
-use MyCode\Services\Validator;
+use App\DB\Models\User;
+use App\Rules\RecordExist;
+use App\Services\Hash;
+use App\Services\Resource;
+use App\Services\SessionTable;
+use App\Services\Validator;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Validator\Constraints\Email;

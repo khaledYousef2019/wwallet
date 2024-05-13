@@ -1,9 +1,9 @@
 <?php
 
-namespace MyCode\Http\Middlewares;
+namespace App\Http\Middlewares;
 
 use Exception;
-use MyCode\DB\User;
+use App\DB\User;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace MyCode\Services;
+namespace App\Services;
 
 use Chocookies\Cookies;
 use Ramsey\Uuid\Uuid;

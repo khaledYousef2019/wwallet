@@ -1,6 +1,6 @@
 <?php
 
-namespace MyCode\Commands;
+namespace App\Commands;
 
 use Ilex\SwoolePsr7\SwooleResponseConverter;
 use Swoole\Http\Request;
@@ -35,10 +35,10 @@ class HttpServer extends Command
     {
         global $app, $requestConverter;
 
-        $server = new Server("0.0.0.0", 8000);
+        $server = new Server("0.0.0.0", 8080);
 
         $server->on("start", function(Server $server) use ($io) {
-            $io->success("HTTP Server ready at http://127.0.0.1:8000");
+            $io->success("HTTP Server ready at http://127.0.0.1:8080");
         });
 
         $server->on('request', function(Request $request, Response $response) use ($app, $requestConverter) {

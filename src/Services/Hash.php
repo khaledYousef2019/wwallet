@@ -1,6 +1,6 @@
 <?php
 
-namespace MyCode\Services;
+namespace App\Services;
 
 use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactory;
 use Symfony\Component\PasswordHasher\PasswordHasherInterface;

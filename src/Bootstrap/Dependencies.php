@@ -1,6 +1,6 @@
 <?php
 
-namespace MyCode\Bootstrap;
+namespace App\Bootstrap;
 
 use Illuminate\Database\Capsule\Manager as DbCapsule;
 use League\Flysystem\Filesystem;

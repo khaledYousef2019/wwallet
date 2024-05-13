@@ -1,9 +1,9 @@
 <?php
 
-namespace MyCode\DB\Factories;
+namespace App\DB\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use MyCode\DB\Models\{{model}};
+use App\DB\Models\{{model}};
 
 class {{model}}Factory extends Factory
 {

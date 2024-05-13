@@ -1,6 +1,6 @@
 <?php
 
-namespace MyCode\Events;
+namespace App\Events;
 
 class UserLoginFail implements EventInterface
 {

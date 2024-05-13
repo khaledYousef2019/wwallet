@@ -1,8 +1,8 @@
 <?php
 
-namespace MyCode\Http\Middlewares;
+namespace App\Http\Middlewares;
 
-use MyCode\Services\JwtToken;
+use App\Services\JwtToken;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;

@@ -1,12 +1,12 @@
 <?php
 
-namespace MyCode\Services;
+namespace App\Services;
 
 use Carbon\Carbon;
 use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use MyCode\DB\Models\Token;
+use App\DB\Models\Token;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 class JwtToken

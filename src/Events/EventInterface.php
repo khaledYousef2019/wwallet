@@ -1,6 +1,6 @@
 <?php
 
-namespace MyCode\Events;
+namespace App\Events;
 
 interface EventInterface
 {

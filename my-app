@@ -6,7 +6,7 @@ const ROOT_DIR = __DIR__;
 require __DIR__ . '/vendor/autoload.php';
 
 use Dotenv\Dotenv;
-use MyCode\Bootstrap\App;
+use App\Bootstrap\App;
 
 global $app, $requestConverter, $application;
 

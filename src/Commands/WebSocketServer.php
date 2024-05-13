@@ -1,12 +1,12 @@
 <?php
 
-namespace MyCode\Commands;
+namespace App\Commands;
 
 use Exception;
 use Ilex\SwoolePsr7\SwooleResponseConverter;
-use MyCode\DB\Models\Token;
-use MyCode\DB\Models\User;
-use MyCode\Services\JwtToken;
+use App\DB\Models\Token;
+use App\DB\Models\User;
+use App\Services\JwtToken;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Swoole\Table;

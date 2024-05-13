@@ -1,8 +1,8 @@
 <?php
 
-namespace MyCode\Events;
+namespace App\Events;
 
-use MyCode\DB\Models\User;
+use App\DB\Models\User;
 
 class UserLogin implements EventInterface
 {

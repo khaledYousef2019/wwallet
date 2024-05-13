@@ -1,6 +1,6 @@
 <?php
 
-namespace MyCode\Commands;
+namespace App\Commands;
 
 use Mustache_Engine;
 use Symfony\Component\Console\Command\Command;

@@ -4,24 +4,24 @@ namespace App\Rules;
 
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
-use App\Rules\RecordExist;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
-class RecordExistValidator extends ConstraintValidator
+class RecordUniqueValidator extends ConstraintValidator
 {
     public function validate($value, Constraint $constraint)
     {
         if (
             !class_exists($constraint->input['model'])
-            || !$constraint instanceof RecordExist
+            || !$constraint instanceof RecordUnique
         ) {
-            throw new UnexpectedTypeException($constraint, RecordExist::class);
+            throw new UnexpectedTypeException($constraint, RecordUnique::class);
         }
 
-        if (!$constraint->input['model']::where($constraint->input['field'], $value)->exists()) {
+        if ($constraint->input['model']::where($constraint->input['field'], $value)->exists()) {
             $this->context->buildViolation($constraint->message)
                 ->setParameter('{{ model }}', (string) $value)
                 ->addViolation();
         }
     }
+
 }

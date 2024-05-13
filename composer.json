@@ -20,7 +20,9 @@
         "league/flysystem": "^3.1",
         "mustache/mustache": "^2.14",
         "symfony/password-hasher": "^6.1",
-        "openswoole/core": "22.1.5"
+        "openswoole/core": "22.1.5",
+        "phpmailer/phpmailer": "^6.5",
+        "jenssegers/agent": "^2.6"
     },
     "require-dev": {
         "swoole/ide-helper": "@dev",
@@ -33,11 +35,11 @@
     },
     "autoload": {
         "psr-4": {
-            "MyCode\\": "src/",
+            "App\\": "src/",
             "Tests\\": "tests/"
         },
         "files": [
-            "src/Helpers/coreconstants.php"
+            "src/Helpers/coreconstant.php"
         ]
     }
 }

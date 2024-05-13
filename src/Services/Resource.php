@@ -1,6 +1,6 @@
 <?php
 
-namespace MyCode\Services;
+namespace App\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use JsonSerializable;

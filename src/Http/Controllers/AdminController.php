@@ -1,11 +1,11 @@
 <?php
 
-namespace MyCode\Http\Controllers;
+namespace App\Http\Controllers;
 
 use League\Plates\Engine;
-use MyCode\DB\Models\User;
-use MyCode\Services\JwtToken;
-use MyCode\Services\SessionTable;
+use App\DB\Models\User;
+use App\Services\JwtToken;
+use App\Services\SessionTable;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 

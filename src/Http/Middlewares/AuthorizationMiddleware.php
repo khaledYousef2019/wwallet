@@ -1,8 +1,8 @@
 <?php
 
-namespace MyCode\Http\Middlewares;
+namespace App\Http\Middlewares;
 
-use MyCode\Services\SessionTable;
+use App\Services\SessionTable;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;

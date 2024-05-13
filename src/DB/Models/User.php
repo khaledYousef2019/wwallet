@@ -1,10 +1,14 @@
 <?php
 
-namespace MyCode\DB\Models;
+namespace App\DB\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use MyCode\DB\Factories\UserFactory;
+use App\DB\Factories\UserFactory;
+use App\DB\Models\ActivityLog;
+use App\DB\Models\ContactDetails;
+use App\DB\Models\PersonalDetails;
+use App\DB\Models\TwoFactorAuthentication;
 
 class User extends Model
 {
@@ -15,9 +19,13 @@ class User extends Model
     protected $table = 'users';
 
     protected $fillable = [
-        'name',
+        'username',
         'email',
         'password',
+        'reset_code',
+        'role',
+        'status',
+        'language',
     ];
 
     protected static function newFactory()
@@ -29,4 +37,27 @@ class User extends Model
     {
         return $this->hasMany(Token::class);
     }
+    public function roles()
+    {}
+    public function hasRole($role){}
+    public function personalDetails()
+    {
+        return $this->hasOne(PersonalDetails::class);
+    }
+
+    public function contactDetails()
+    {
+        return $this->hasOne(ContactDetails::class);
+    }
+    public function twoFactorAuthentication()
+    {
+        return $this->hasOne(TwoFactorAuthentication::class);
+    }
+    public function activityLog()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+
+
 }

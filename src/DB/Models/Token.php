@@ -1,18 +1,14 @@
 <?php
 
-namespace MyCode\DB\Models;
+namespace App\DB\Models;
 
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 
 class Token extends Model
 {
-    const TABLE_NAME = 'tokens';
-
-    protected $table = self::TABLE_NAME;
-
+    protected $table = 'tokens';
     protected array $defaults = [];
-
     protected $fillable = [
         'name',
         'user_id',
@@ -21,6 +17,8 @@ class Token extends Model
         'uses',
         'use_limit',
     ];
+    private mixed $use_limit;
+    private int $uses;
 
     /**
      * @return $this

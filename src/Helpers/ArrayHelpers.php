@@ -1,6 +1,6 @@
 <?php
 
-namespace MyCode\Helpers;
+namespace App\Helpers;
 
 class ArrayHelpers
 {

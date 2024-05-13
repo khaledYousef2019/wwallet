@@ -1,10 +1,10 @@
 <?php
 
-namespace MyCode\DB\Factories;
+namespace App\DB\Factories;
 
 use Faker\Factory as Faker;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use MyCode\DB\Models\User;
+use App\DB\Models\User;
 
 class UserFactory extends Factory
 {

@@ -1,15 +1,15 @@
 <?php
 
-namespace MyCode\Commands;
+namespace App\Commands;
 
 use Carbon\Carbon;
 use Exception;
 use Firebase\JWT\JWT;
-use MyCode\DB\Models\Token;
-use MyCode\DB\Models\User;
-use MyCode\Rules\RecordExist;
-use MyCode\Services\JwtToken;
-use MyCode\Services\Validator;
+use App\DB\Models\Token;
+use App\DB\Models\User;
+use App\Rules\RecordExist;
+use App\Services\JwtToken;
+use App\Services\Validator;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
