@@ -2,6 +2,7 @@
 
 namespace App\Bootstrap;
 
+use App\Http\Middlewares\NotFoundHandlerMiddleware;
 use DI\Container;
 use Ilex\SwoolePsr7\SwooleServerRequestConverter;
 use App\Commands\GenerateFactory;
@@ -22,18 +23,18 @@ use Symfony\Component\Console\Application;
 
 class App
 {
-    public static function start()
+    public static function start(): void
     {
         $app = App::prepareSlimApp();
 
         Dependencies::start($app);
         self::registerEvents($app);
         self::registerRoutes($app);
-
+        self::addNotFoundMiddleware($app);
         self::processCommands();
     }
 
-    public static function registerRoutes(SlimApp $app)
+    public static function registerRoutes(SlimApp $app): void
     {
         (require ROOT_DIR . '/src/routes.php')($app);
 
@@ -55,6 +56,14 @@ class App
         return $app;
     }
 
+    private static function addNotFoundMiddleware(SlimApp $app): void
+    {
+        $app->add(NotFoundHandlerMiddleware::class);
+    }
+
+    /**
+     * @throws \Exception
+     */
     private static function processCommands(): void
     {
         $application = new Application();
@@ -69,7 +78,7 @@ class App
         $application->run();
     }
 
-    private static function registerEvents(SlimApp $app)
+    private static function registerEvents(SlimApp $app): void
     {
         $container = $app->getContainer();
 

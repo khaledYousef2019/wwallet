@@ -4,6 +4,8 @@ namespace App\Commands;
 
 use App\DB\Models\ActivityLog;
 use App\DB\Models\AdminNotifications;
+use App\DB\Models\currency;
+use App\DB\Models\Wallet;
 use Exception;
 use Illuminate\Database\Schema\Blueprint;
 use App\DB\Models\Token;
@@ -229,8 +231,8 @@ class Migrate extends Command
                 $tbl->bigIncrements('id');
                 $tbl->unsignedBigInteger('user_id');
                 $tbl->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-                $tbl->string('device_id')->nullable();
-                $tbl->string('name');
+                $tbl->string('device_type')->nullable();
+                $tbl->string('name')->nullable();
                 $tbl->timestamps();
             });
 
@@ -349,6 +351,87 @@ class Migrate extends Command
         } else {
             if (!$input->getOption('quiet')) {
                 $io->error('Tokens table already exists!');
+            }
+        }
+    }
+    private function migrateWallets(InputInterface $input, SymfonyStyle $io): void
+    {
+        /** @var App */
+        global $app;
+
+        $fresh = $input->getOption('fresh');
+
+        $wallet = new Wallet();
+
+        $db = $app->getContainer()->get('db')->schema();
+
+        if ($db->hasTable($wallet->getTable()) && $fresh) {
+            $db->drop($wallet->getTable());
+        }
+
+        if (!$db->hasTable($wallet->getTable()) || $fresh) {
+            $db->create($wallet->getTable(), function (Blueprint $table) {
+                $table->increments('id');
+                $table->unsignedBigInteger('user_id');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->string('symbol', 20);
+                $table->foreign('symbol')->references('symbol')->on('currencies');
+                $table->string('chain',20);
+                $table->decimal('balance',19,8)->default(0);
+                $table->string('address',64);
+                $table->string('activation_trx',64)->nullable();
+                $table->string('network',50)->nullable();
+                $table->tinyInteger('status')->default(0);
+                $table->timestamps();
+            });
+
+            if (!$input->getOption('quiet')) {
+                $io->success('Wallets table created successfully!');
+            }
+        } else {
+            if (!$input->getOption('quiet')) {
+                $io->error('Wallets table already exists!');
+            }
+        }
+    }
+    private function migrateCurrency(InputInterface $input, SymfonyStyle $io): void
+    {
+        /** @var App */
+        global $app;
+
+        $fresh = $input->getOption('fresh');
+
+        $coin = new Currency;
+
+        $db = $app->getContainer()->get('db')->schema();
+
+        if ($db->hasTable($coin->getTable()) && $fresh) {
+            $db->drop($coin->getTable());
+        }
+
+        if (!$db->hasTable($coin->getTable()) || $fresh) {
+            $db->create($coin->getTable(), function (Blueprint $table) {
+                $table->increments('id');
+                $table->unsignedBigInteger('user_id');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->string('symbol',20);
+                $table->string('name', 40);
+                $table->decimal('usd',19,8)->default(0);
+                $table->tinyInteger('status')->default(1);
+                $table->string('address',64);
+                $table->string('image',255)->nullable();
+                $table->tinyInteger('is_withdrawal',0)->default(0);
+                $table->tinyInteger('is_deposit',0)->default(0);
+                $table->text('description')->nullable();
+                $table->timestamps();
+            });
+
+            if (!$input->getOption('quiet')) {
+                $io->success('Currencies table created successfully!');
+            }
+        } else {
+            if (!$input->getOption('quiet')) {
+                $io->error('Currencies table already exists!');
             }
         }
     }

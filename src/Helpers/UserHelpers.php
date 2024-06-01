@@ -39,6 +39,7 @@ class UserHelpers
 //            $country  = '';
 //        }
         $activity['user_id'] = $userId;
+//        $activity['device_id'] = $deviceId;
         $activity['action'] = $action;
         $activity['ip_address'] = $current_ip ?? '0.0.0.0';
         $activity['source'] = $deviceType;
@@ -49,7 +50,7 @@ class UserHelpers
     {
         $agent = new Agent();
         $deviceType = $agent->isMobile() ? 'Mobile' : 'Web';
-        if(UserDevices::where(['user_id' => $userId, 'device_type' => $deviceType])->exists()){
+        if(UserDevices::where(['user_id' => $userId])->exists()){
             return true;
         }
         $device['user_id'] = $userId;

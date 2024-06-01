@@ -44,7 +44,8 @@ class JwtToken
         $token = $authorization[1];
 
         try {
-            $tokenRecord = Token::where('token', $token)->first()->consume();
+            $tokenRecord = Token::where('token', $token)->first();
+            $tokenRecord ? $tokenRecord->consume() : throw new Exception('Token not found');
         } catch (Exception $e) {
             $app->getContainer()->get('logger')->error('Invalid token: ' . $e->getMessage());
             return null;

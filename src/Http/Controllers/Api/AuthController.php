@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\DB\Models\ContactDetails;
 use App\DB\Models\PersonalDetails;
+use App\DB\Models\Token;
 use App\Events\UserRegister;
 use App\Helpers\UserHelpers;
 use App\Http\Services\AuthService;
@@ -57,8 +58,8 @@ class AuthController
         $token = JwtToken::create(
             name: uniqid(),
             userId: $user->id,
-            expire: null,
-            useLimit: 1
+            expire: 300,
+            useLimit: 20
         )->token;
 
         $session = $request->getAttribute('session');
@@ -74,15 +75,18 @@ class AuthController
         $response->getBody()->write(json_encode(['data' => $responseData]));
         return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
     }
+
+    /**
+     * @throws Exception
+     */
     public function logoutHandler(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
         $session = $request->getAttribute('session');
         $sessionTable = SessionTable::getInstance();
         $sessionData = $sessionTable->get($session['id']);
-
         Events::dispatch(new UserLogout(User::find($sessionData['user_id'])));
-        $sessionTable->set($session['id'], ['id' => $session['id']]);
-
+        $sessionTable->delete($session['id']);
+//        Token::deleteToken();
         $responseData = ['message' => 'Logout successful'];
         $response->getBody()->write(json_encode($responseData));
 
@@ -129,18 +133,48 @@ class AuthController
 //                'photo' => $data['photo'],
 //            ]);
 
-            UserHelpers::AddUserDevice($user->id);
 
-            UserHelpers::createUserActivity($user->id,`User {$user->username} Registered`);
-
-//            Events::dispatch(new UserRegister($user));
+            Events::dispatch(new UserRegister($user));
             $response->getBody()->write(json_encode(['success' => true,'message' => 'Sign up successful, Please verify your mail']));
             return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
         } catch (Exception $e) {
-//            $app->getContainer()->get('logger')->error('Error In System ' . $e->getMessage());
+            $app->getContainer()->get('logger')->error('Error In System ' . $e->getMessage());
             $response->getBody()->write(json_encode(['success' => false,'error' => 'Failed to register '. $e->getMessage()]));
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
     }
 
+    public function checkEmail(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
+    {
+        global $app;
+
+        $data = $request->getParsedBody();
+        $validator = Validator::make(ArrayHelpers::only($data, ['email', 'password','username','password_confirmation']),[
+                'email' => 'required|email|max:100|unique:email,'.User::class,
+            ]
+        );
+        if ($validator->getViolations()){
+            $response->getBody()->write(json_encode(['success' => false, 'errors' =>$validator->getViolations()]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+        $response->getBody()->write(json_encode(['success' => true, 'message' => 'Valid Email']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    public function checkUsername(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
+    {
+        global $app;
+
+        $data = $request->getParsedBody();
+        $validator = Validator::make(ArrayHelpers::only($data, ['email', 'password','username','password_confirmation']),[
+                'username' => 'required|string|min:6|max:255|unique:username,'.User::class,
+            ]
+        );
+        if ($validator->getViolations()){
+            $response->getBody()->write(json_encode(['success' => false, 'errors' =>$validator->getViolations()]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+        $response->getBody()->write(json_encode(['success' => true, 'message' => 'Valid Username']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
 }

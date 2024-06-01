@@ -17,8 +17,11 @@ class ActivityLog extends Model
 
     protected $fillable = [
         'user_id',
-        'activity_type',
-        'description',
+        'device_id',
+        'action',
+        'ip_address',
+//        'source',
+        'location'
     ];
 
     public function user(): HasOne

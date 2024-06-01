@@ -16,7 +16,7 @@ class UserDevices extends Model
 
     protected $fillable = [
         'user_id',
-        'device_id',
+        'device_type',
         'name',
     ];
     public function user(): BelongsTo

@@ -3,6 +3,7 @@
 namespace App\Http\Middlewares;
 
 use App\Services\JwtToken;
+use Carbon\Carbon;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
