@@ -4,7 +4,7 @@ namespace App\Commands;
 
 use App\DB\Models\ActivityLog;
 use App\DB\Models\AdminNotifications;
-use App\DB\Models\currency;
+use App\DB\Models\Currency;
 use App\DB\Models\Wallet;
 use Exception;
 use Illuminate\Database\Schema\Blueprint;
@@ -52,6 +52,8 @@ class Migrate extends Command
             $this->migrateTwoFactorAuthentication($input, $io);
             $this->migrateUserAcivityLogs($input, $io);
             $this->migrateAdminNotifications($input, $io);
+            $this->migrateCurrencies($input, $io);
+            $this->migrateWallets($input, $io);
         } catch (Exception $e) {
             if (!$input->getOption('quiet')) {
                 $io->error('There was an error while running migrations: ' . $e->getMessage());
@@ -354,47 +356,8 @@ class Migrate extends Command
             }
         }
     }
-    private function migrateWallets(InputInterface $input, SymfonyStyle $io): void
-    {
-        /** @var App */
-        global $app;
 
-        $fresh = $input->getOption('fresh');
-
-        $wallet = new Wallet();
-
-        $db = $app->getContainer()->get('db')->schema();
-
-        if ($db->hasTable($wallet->getTable()) && $fresh) {
-            $db->drop($wallet->getTable());
-        }
-
-        if (!$db->hasTable($wallet->getTable()) || $fresh) {
-            $db->create($wallet->getTable(), function (Blueprint $table) {
-                $table->increments('id');
-                $table->unsignedBigInteger('user_id');
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-                $table->string('symbol', 20);
-                $table->foreign('symbol')->references('symbol')->on('currencies');
-                $table->string('chain',20);
-                $table->decimal('balance',19,8)->default(0);
-                $table->string('address',64);
-                $table->string('activation_trx',64)->nullable();
-                $table->string('network',50)->nullable();
-                $table->tinyInteger('status')->default(0);
-                $table->timestamps();
-            });
-
-            if (!$input->getOption('quiet')) {
-                $io->success('Wallets table created successfully!');
-            }
-        } else {
-            if (!$input->getOption('quiet')) {
-                $io->error('Wallets table already exists!');
-            }
-        }
-    }
-    private function migrateCurrency(InputInterface $input, SymfonyStyle $io): void
+    private function migrateCurrencies(InputInterface $input, SymfonyStyle $io): void
     {
         /** @var App */
         global $app;
@@ -412,8 +375,6 @@ class Migrate extends Command
         if (!$db->hasTable($coin->getTable()) || $fresh) {
             $db->create($coin->getTable(), function (Blueprint $table) {
                 $table->increments('id');
-                $table->unsignedBigInteger('user_id');
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
                 $table->string('symbol',20);
                 $table->string('name', 40);
                 $table->decimal('usd',19,8)->default(0);
@@ -432,6 +393,48 @@ class Migrate extends Command
         } else {
             if (!$input->getOption('quiet')) {
                 $io->error('Currencies table already exists!');
+            }
+        }
+    }
+    private function migrateWallets(InputInterface $input, SymfonyStyle $io): void
+    {
+        /** @var App */
+        global $app;
+
+        $fresh = $input->getOption('fresh');
+
+        $wallet = new Wallet();
+
+        $db = $app->getContainer()->get('db')->schema();
+
+        if ($db->hasTable($wallet->getTable()) && $fresh) {
+            $db->drop($wallet->getTable());
+        }
+
+        if (!$db->hasTable($wallet->getTable()) || $fresh) {
+            $db->create($wallet->getTable(), function (Blueprint $table) {
+                $table->increments('id');
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
+                $table->foreignId('currency_id')->constrained()->onDelete('cascade');
+//                $table->string('symbol', 20);
+//                $table->foreign('symbol')->references('symbol')->on('currencies');
+                $table->string('chain',20);
+                $table->decimal('balance',19,8)->default(0);
+                $table->string('address',64);
+                $table->string('activation_trx',64)->nullable();
+                $table->string('network',50)->nullable();
+                $table->tinyInteger('status')->default(0);
+                $table->timestamps();
+                $table->softDeletes();
+                $table->unique(['user_id', 'currency_id']);
+            });
+
+            if (!$input->getOption('quiet')) {
+                $io->success('Wallets table created successfully!');
+            }
+        } else {
+            if (!$input->getOption('quiet')) {
+                $io->error('Wallets table already exists!');
             }
         }
     }

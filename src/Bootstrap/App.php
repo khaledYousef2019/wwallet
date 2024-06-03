@@ -2,7 +2,10 @@
 
 namespace App\Bootstrap;
 
+use App\Commands\ScheduleCurrencyFetch;
+use App\Events\FetchCurrencyInfo;
 use App\Http\Middlewares\NotFoundHandlerMiddleware;
+use App\Listeners\FetchCurrencyInfoListener;
 use DI\Container;
 use Ilex\SwoolePsr7\SwooleServerRequestConverter;
 use App\Commands\GenerateFactory;
@@ -74,6 +77,7 @@ class App
         $application->add(new Seed);
         $application->add(new GenerateJwtToken);
         $application->add(new GenerateFactory);
+        $application->add(new ScheduleCurrencyFetch());
 
         $application->run();
     }
@@ -93,6 +97,6 @@ class App
         Events::addListener(UserLoginFail::class, function(EventInterface $event) use ($container) {
             $container->get('logger')->info('Login attempt fail: ' . $event->email);
         });
-        testing
+        Events::addListener(FetchCurrencyInfo::class, [new FetchCurrencyInfoListener(), 'handle']);
     }
 }
