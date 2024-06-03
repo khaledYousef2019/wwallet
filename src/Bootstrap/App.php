@@ -93,5 +93,6 @@ class App
         Events::addListener(UserLoginFail::class, function(EventInterface $event) use ($container) {
             $container->get('logger')->info('Login attempt fail: ' . $event->email);
         });
+        testing
     }
 }
