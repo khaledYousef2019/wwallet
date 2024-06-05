@@ -50,7 +50,7 @@ class Migrate extends Command
             $this->migrateContactDetails($input, $io);
             $this->migrateUserDevices($input, $io);
             $this->migrateTwoFactorAuthentication($input, $io);
-            $this->migrateUserAcivityLogs($input, $io);
+            $this->migrateUserActivityLogs($input, $io);
             $this->migrateAdminNotifications($input, $io);
             $this->migrateCurrencies($input, $io);
             $this->migrateWallets($input, $io);
@@ -122,8 +122,7 @@ class Migrate extends Command
         if (!$db->hasTable($user->getTable()) || $fresh) {
             $db->create($user->getTable(), function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->unsignedBigInteger('user_id');
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
                 $table->string('first_name');
                 $table->string('last_name');
                 $table->tinyInteger('gender')->default(1);
@@ -158,8 +157,7 @@ class Migrate extends Command
         if (!$db->hasTable($user->getTable()) || $fresh) {
             $db->create($user->getTable(), function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->unsignedBigInteger('user_id');
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
                 $table->string('country', 50)->nullable();
                 $table->string('country_code', 10)->nullable();
                 $table->string('phone', 15)->nullable();
@@ -198,8 +196,7 @@ class Migrate extends Command
         if (!$db->hasTable($user->getTable()) || $fresh) {
             $db->create($user->getTable(), function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->unsignedBigInteger('user_id');
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
                 $table->tinyInteger('g2f_enabled')->default(0);
                 $table->string('google2fa_secret')->nullable();
             });
@@ -231,8 +228,7 @@ class Migrate extends Command
         if (!$db->hasTable($table->getTable()) || $fresh) {
             $db->create($table->getTable(), function (Blueprint $tbl) {
                 $tbl->bigIncrements('id');
-                $tbl->unsignedBigInteger('user_id');
-                $tbl->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $tbl->foreignId('user_id')->constrained()->onDelete('cascade');
                 $tbl->string('device_type')->nullable();
                 $tbl->string('name')->nullable();
                 $tbl->timestamps();
@@ -247,7 +243,7 @@ class Migrate extends Command
             }
         }
     }
-    private function migrateUserAcivityLogs(InputInterface $input, SymfonyStyle $io): void
+    private function migrateUserActivityLogs(InputInterface $input, SymfonyStyle $io): void
     {
         /** @var App */
         global $app;
@@ -265,8 +261,7 @@ class Migrate extends Command
         if (!$db->hasTable($user->getTable()) || $fresh) {
             $db->create($user->getTable(), function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->unsignedBigInteger('user_id');
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
                 $table->string('device_id')->nullable();
                 $table->string('action')->nullable();
                 $table->string('ip_address')->nullable();
@@ -301,8 +296,7 @@ class Migrate extends Command
         if (!$db->hasTable($table->getTable()) || $fresh) {
             $db->create($table->getTable(), function (Blueprint $tbl) {
                 $tbl->bigIncrements('id');
-                $tbl->unsignedBigInteger('user_id');
-                $tbl->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $tbl->foreignId('user_id')->constrained()->onDelete('cascade');
                 $tbl->string('title');
                 $tbl->tinyInteger('read_status')->default(0);
                 $tbl->string('click_url')->nullable();
@@ -336,9 +330,8 @@ class Migrate extends Command
 
         if (!$db->hasTable($token->getTable()) || $fresh) {
             $db->create($token->getTable(), function (Blueprint $table) {
-                $table->increments('id');
-                $table->unsignedBigInteger('user_id');
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->bigIncrements('id');
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
                 $table->string('name', 40);
                 $table->dateTime('expire_at')->nullable();
                 $table->string('token', 150);
@@ -374,7 +367,7 @@ class Migrate extends Command
 
         if (!$db->hasTable($coin->getTable()) || $fresh) {
             $db->create($coin->getTable(), function (Blueprint $table) {
-                $table->increments('id');
+                $table->bigIncrements('id');
                 $table->string('symbol',20);
                 $table->string('name', 40);
                 $table->decimal('usd',19,8)->default(0);
@@ -413,16 +406,14 @@ class Migrate extends Command
 
         if (!$db->hasTable($wallet->getTable()) || $fresh) {
             $db->create($wallet->getTable(), function (Blueprint $table) {
-                $table->increments('id');
+                $table->bigIncrements('id');
                 $table->foreignId('user_id')->constrained()->onDelete('cascade');
                 $table->foreignId('currency_id')->constrained()->onDelete('cascade');
-//                $table->string('symbol', 20);
-//                $table->foreign('symbol')->references('symbol')->on('currencies');
-                $table->string('chain',20);
-                $table->decimal('balance',19,8)->default(0);
-                $table->string('address',64);
-                $table->string('activation_trx',64)->nullable();
-                $table->string('network',50)->nullable();
+                $table->string('chain', 20);
+                $table->decimal('balance', 19, 8)->default(0);
+                $table->string('address', 64);
+                $table->string('activation_trx', 64)->nullable();
+                $table->string('network', 50)->nullable();
                 $table->tinyInteger('status')->default(0);
                 $table->timestamps();
                 $table->softDeletes();
