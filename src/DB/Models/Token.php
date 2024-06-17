@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 
-class Token extends Model
+class JwtToken extends Model
 {
     const TABLE_NAME = 'tokens';
 
