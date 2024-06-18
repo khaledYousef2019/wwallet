@@ -82,8 +82,8 @@ class Migrate extends Command
         if (!$db->hasTable($user->getTable()) || $fresh) {
             $db->create($user->getTable(), function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->string('username')->unique();
-                $table->string('email', 50)->unique();
+                $table->string('username');
+                $table->string('email', 50);
                 $table->tinyInteger('email_verified')->default(0);
                 $table->string('password');
                 $table->string('reset_code', 100)->unique()->nullable();
@@ -92,6 +92,9 @@ class Migrate extends Command
                 $table->string('language', 10)->default('en');
                 $table->rememberToken();
                 $table->timestamps();
+                $table->softDeletes();
+                $table->unique(['username', 'email']);
+                $table->index(['username', 'email']);
             });
 
             if (!$input->getOption('quiet')) {
@@ -128,6 +131,8 @@ class Migrate extends Command
                 $table->tinyInteger('gender')->default(1);
                 $table->date('birth_date')->nullable();
                 $table->string('photo')->nullable();
+                $table->softDeletes();
+                $table->index('user_id');
             });
 
             if (!$input->getOption('quiet')) {
@@ -165,6 +170,8 @@ class Migrate extends Command
                 $table->string('city', 50)->nullable();
                 $table->string('street', 250)->nullable();
                 $table->string('postal_code', 20)->nullable();
+                $table->softDeletes();
+                $table->index('user_id');
 //                $table->string('email', 50)->nullable();
 //                $table->tinyInteger('email_verified')->default(0);
             });
@@ -199,6 +206,8 @@ class Migrate extends Command
                 $table->foreignId('user_id')->constrained()->onDelete('cascade');
                 $table->tinyInteger('g2f_enabled')->default(0);
                 $table->string('google2fa_secret')->nullable();
+                $table->softDeletes();
+                $table->index('user_id');
             });
 
             if (!$input->getOption('quiet')) {
@@ -232,6 +241,8 @@ class Migrate extends Command
                 $tbl->string('device_type')->nullable();
                 $tbl->string('name')->nullable();
                 $tbl->timestamps();
+                $tbl->softDeletes();
+                $tbl->index('user_id');
             });
 
             if (!$input->getOption('quiet')) {
@@ -267,6 +278,8 @@ class Migrate extends Command
                 $table->string('ip_address')->nullable();
                 $table->string('location')->nullable();
                 $table->timestamps();
+                $table->softDeletes();
+                $table->index(['user_id', 'device_id']);
             });
 
             if (!$input->getOption('quiet')) {
@@ -302,6 +315,8 @@ class Migrate extends Command
                 $tbl->string('click_url')->nullable();
                 $tbl->string('message')->nullable();
                 $tbl->timestamps();
+                $tbl->softDeletes();
+                $tbl->index('user_id');
             });
 
             if (!$input->getOption('quiet')) {
@@ -310,6 +325,42 @@ class Migrate extends Command
         } else {
             if (!$input->getOption('quiet')) {
                 $io->error('Admin Notifications Table already exists!');
+            }
+        }
+    }
+    private function migrateSystemNotifications(InputInterface $input, SymfonyStyle $io): void
+    {
+        /** @var App */
+        global $app;
+
+        $fresh = $input->getOption('fresh');
+
+        $table = new AdminNotifications();
+
+        $db = $app->getContainer()->get('db')->schema();
+
+        if ($db->hasTable($table->getTable()) && $fresh) {
+            $db->drop($table->getTable());
+        }
+
+        if (!$db->hasTable($table->getTable()) || $fresh) {
+            $db->create($table->getTable(), function (Blueprint $tbl) {
+                $tbl->bigIncrements('id');
+                $tbl->string('model');
+                $tbl->string('title');
+                $tbl->tinyInteger('read_status')->default(0);
+                $tbl->string('click_url')->nullable();
+                $tbl->string('message')->nullable();
+                $tbl->timestamps();
+                $tbl->softDeletes();
+            });
+
+            if (!$input->getOption('quiet')) {
+                $io->success('System Notifications Table created successfully!');
+            }
+        } else {
+            if (!$input->getOption('quiet')) {
+                $io->error('System Notifications Table already exists!');
             }
         }
     }
@@ -338,6 +389,8 @@ class Migrate extends Command
                 $table->integer('uses')->default(0);
                 $table->integer('use_limit')->default(0);
                 $table->timestamps();
+                $table->softDeletes();
+                $table->index('user_id');
             });
 
             if (!$input->getOption('quiet')) {
@@ -378,6 +431,8 @@ class Migrate extends Command
                 $table->tinyInteger('is_deposit',0)->default(0);
                 $table->text('description')->nullable();
                 $table->timestamps();
+                $table->softDeletes();
+                $table->index('symbol');
             });
 
             if (!$input->getOption('quiet')) {
@@ -418,6 +473,7 @@ class Migrate extends Command
                 $table->timestamps();
                 $table->softDeletes();
                 $table->unique(['user_id', 'currency_id']);
+                $table->index(['user_id', 'currency_id']);
             });
 
             if (!$input->getOption('quiet')) {

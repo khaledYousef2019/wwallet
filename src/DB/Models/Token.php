@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 
-class JwtToken extends Model
+class Token extends Model
 {
     const TABLE_NAME = 'tokens';
 
@@ -33,9 +33,13 @@ class JwtToken extends Model
      */
     public function consume(): self
     {
-        if (($this->use_limit !== 0 && $this->uses >= $this->use_limit ) || ($this->expire_at < Carbon::now()->toDateTimeString())) {
+        if ($this->use_limit !== 0 && $this->uses >= $this->use_limit) {
             $this->delete();
-            throw new Exception('Token already consumed!');
+            throw new Exception('Logged in with maximum Devices limit reached.!');
+        }
+        if ($this->expire_at < Carbon::now()->toDateTimeString()) {
+            $this->delete();
+            throw new Exception('Login Expired!');
         }
         $this->uses = $this->uses + 1;
         $this->save();

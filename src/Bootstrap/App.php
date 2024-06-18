@@ -26,6 +26,9 @@ use Symfony\Component\Console\Application;
 
 class App
 {
+    /**
+     * @throws \Exception
+     */
     public static function start(): void
     {
         $app = App::prepareSlimApp();
@@ -34,6 +37,7 @@ class App
         self::registerEvents($app);
         self::registerRoutes($app);
         self::addNotFoundMiddleware($app);
+        self::ConnectionPoolMiddleware($app);
         self::processCommands();
     }
 
@@ -63,6 +67,11 @@ class App
     {
         $app->add(NotFoundHandlerMiddleware::class);
     }
+    private static function ConnectionPoolMiddleware(SlimApp $app): void
+    {
+        $app->add(\App\Middlewares\ConnectionPoolMiddleware::class);
+    }
+
 
     /**
      * @throws \Exception

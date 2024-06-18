@@ -7,11 +7,11 @@ use Ilex\SwoolePsr7\SwooleResponseConverter;
 use App\DB\Models\Token;
 use App\DB\Models\User;
 use App\Services\JwtToken;
-use Swoole\Http\Request;
-use Swoole\Http\Response;
-use Swoole\Table;
-use Swoole\WebSocket\Frame;
-use Swoole\WebSocket\Server;
+use OpenSwoole\Http\Request;
+use OpenSwoole\Http\Response;
+use OpenSwoole\Table;
+use OpenSwoole\WebSocket\Frame;
+use OpenSwoole\WebSocket\Server;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -61,7 +61,7 @@ class WebSocketServer extends Command
         $server->on("start", function(Server $server) use ($io, $http) {
             $io->success("WebSocket Server ready at ws://127.0.0.1:" . $server->port);
             if ($http) {
-                $io->info('This server is also serving HTTP requests!');
+                $io->success('This server is also serving HTTP requests!');
             }
         });
 
@@ -75,10 +75,7 @@ class WebSocketServer extends Command
         }
 
         $server->on('open', function(Server $server, Request $request) use ($io) {
-            if (
-                !isset($request->get['token'])
-                || !$this->identifyUser($request->get['token'], $request->fd)
-            ) {
+            if ( !isset($request->get['token']) || !$this->identifyUser($request->get['token'], $request->fd)) {
                 $server->disconnect($request->fd, 1003, 'Unauthorized connection!');
                 $io->error('Failed to connect: ' . $request->fd);
                 return;
@@ -112,6 +109,8 @@ class WebSocketServer extends Command
             'document_root' => ROOT_DIR . '/public',
             'enable_static_handler' => true,
             'static_handler_locations' => ['/js'],
+            'worker_num' => 4,
+            'backlog' => 128,
         ]);
 
         $server->start();
@@ -123,9 +122,11 @@ class WebSocketServer extends Command
         $logger = $app->getContainer()->get('logger');
 
         try {
-            $tokenRecord = Token::where('token', $token)->first()->consume();
+            $tokenRecord = Token::where('token', $token)->first();
+            $tokenRecord ? $tokenRecord->consume() : throw new Exception('Token not found');
         } catch (Exception $e) {
             $logger->error('Invalid token: ' . $e->getMessage());
+
             return false;
         }
 
@@ -141,7 +142,7 @@ class WebSocketServer extends Command
             return false;
         }
 
-        $logger->info('User identified: ' . $tokenDecoded['user_id']);
+        $logger->info('User identified: ' . $user->username);
 
         return $this->userTable->set($fd, [
             'user_id' => $tokenDecoded['user_id'],
