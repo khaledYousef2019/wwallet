@@ -3,6 +3,7 @@
 namespace App\Http\Middlewares;
 
 use App\Services\SessionTable;
+use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
@@ -20,15 +21,18 @@ class AuthorizationMiddleware
         $session_data = $session_table->get($request->getAttribute('session')['id']);
 
         if (!$is_login_route && !isset($session_data['user_id'])) {
-            return (new Response)
-                ->withHeader('Location', '/login')
-                ->withStatus(302);
+            $factory = new Psr17Factory();
+            $steam = $factory->createStream(json_encode([
+                'status' => 'unauthorized',
+                'message' => 'Unauthorized Procedure!',
+            ]));
+            return (new Response)->withBody($steam)->withStatus(401)->withHeader('Content-Type', 'application/json');
         }
 
         if ($is_login_route && isset($session_data['user_id'])) {
-            return (new Response)
-                ->withHeader('Location', '/admin')
-                ->withStatus(302);
+            $psr17Factory = new Psr17Factory();
+            $responseBody = $psr17Factory->createStream(json_encode(['error' => 'Already Logged In']));
+            return (new Response())->withBody($responseBody)->withHeader('Content-Type', 'application/json')->withStatus(303);
         }
 
         return $handler->handle($request);

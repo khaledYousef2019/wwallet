@@ -23,7 +23,9 @@
         "openswoole/core": "22.1.5",
         "phpmailer/phpmailer": "^6.5",
         "jenssegers/agent": "^2.6",
-        "guzzlehttp/guzzle": "^7.8"
+        "guzzlehttp/guzzle": "^7.8",
+      "ext-pdo": "*",
+        "laminas/laminas-httphandlerrunner": "^2.10"
     },
     "require-dev": {
         "swoole/ide-helper": "@dev",
@@ -37,7 +39,8 @@
     "autoload": {
         "psr-4": {
             "App\\": "src/",
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "OpenSwoole\\Core\\": "vendor/openswoole/core/src/"
         },
         "files": [
             "src/Helpers/coreconstant.php"

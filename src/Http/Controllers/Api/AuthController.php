@@ -8,6 +8,7 @@ use App\DB\Models\Token;
 use App\Events\UserRegister;
 use App\Helpers\UserHelpers;
 use App\Http\Services\AuthService;
+use co;
 use Exception;
 use App\DB\Models\User;
 use App\Events\UserLogin;
@@ -32,6 +33,8 @@ class AuthController
     }
     public function loginHandler(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
+
+
         $data = $request->getParsedBody();
 //        $validator = $this->validateLoginForm(ArrayHelpers::only($data, ['email', 'password']));
         $validator = Validator::make(ArrayHelpers::only($data, ['email', 'password']),[
@@ -90,7 +93,7 @@ class AuthController
         $responseData = ['message' => 'Logout successful'];
         $response->getBody()->write(json_encode($responseData));
 
-        return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
+        return $response->withStatus(204)->withHeader('Content-Type', 'application/json');
     }
     public function registerHandler(RequestInterface $request, ResponseInterface $response, $args)
     {
