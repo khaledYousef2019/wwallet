@@ -22,6 +22,7 @@ class Dependencies
     {
         $app->getContainer()->set('logger', function() {
             $logger = new Logger('app');
+            $logger->setHandlers([]);
             $logger->pushHandler(new StreamHandler(ROOT_DIR . '/' . $_ENV['LOG_STORAGE'], Logger::DEBUG));
             return $logger;
         });
