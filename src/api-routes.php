@@ -19,7 +19,7 @@ return function (RouteCollectorProxy $group) {
         // Dashboard route requires JWT authentication
         $group2->get('/dashboard', DashboardController::class . ':index')
             ->setName('api-dashboard-get');
-    })->add(new AuthorizationMiddleware)->add(new JwtAuthMiddleware)->add(new SessionMiddleware);
+    });
 
     // Group for routes requiring authorization (login and logout)
     $group->group('', function (RouteCollectorProxy $group) {
