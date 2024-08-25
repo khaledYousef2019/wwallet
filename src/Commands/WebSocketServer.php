@@ -12,12 +12,14 @@ use OpenSwoole\Http\Response;
 use OpenSwoole\Table;
 use OpenSwoole\WebSocket\Frame;
 use OpenSwoole\WebSocket\Server;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+#[AsCommand(name: 'ws-server', description: 'Starts WebSocket Server')]
 class WebSocketServer extends Command
 {
     protected static $defaultName = 'ws-server';

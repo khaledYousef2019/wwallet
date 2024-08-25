@@ -45,22 +45,22 @@ class Token extends Model
         $this->save();
         return $this;
     }
-    public static function deleteToken(string $tokenValue): ?bool
-    {
-        try {
-            // Find the token by its value
-            $token = self::where('token', $tokenValue)->first();
-
-            if (!$token) {
-                throw new Exception('Token not found');
-            }
-
-            // Delete the token
-            return $token->delete();
-        } catch (Exception $e) {
-            // Handle exceptions
-            // You may log the error or take other actions as needed
-            throw new Exception('Failed to delete token: ' . $e->getMessage());
-        }
-    }
+//    public static function deleteToken(string $tokenValue): ?bool
+//    {
+//        try {
+//            // Find the token by its value
+//            $token = self::where('token', $tokenValue)->first();
+//
+//            if (!$token) {
+//                throw new Exception('Token not found');
+//            }
+//
+//            // Delete the token
+//            return $token->delete();
+//        } catch (Exception $e) {
+//            // Handle exceptions
+//            // You may log the error or take other actions as needed
+//            throw new Exception('Failed to delete token: ' . $e->getMessage());
+//        }
+//    }
 }

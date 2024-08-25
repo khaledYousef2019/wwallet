@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use DateInterval;
+use mysql_xdevapi\Exception;
 use Psr\SimpleCache\CacheInterface;
 use Swoole\Table;
 
@@ -36,29 +37,50 @@ class SessionTable implements CacheInterface
     protected function createTable(): Table
     {
         $table = new Table(1024);
-        $table->column('data', Table::TYPE_STRING, 1000);
-        $table->column('ttl', Table::TYPE_INT, 8);
+        $table->column('data', Table::TYPE_STRING, 1000); // Store JSON encoded data
+        $table->column('ttl', Table::TYPE_INT, 8); // Store timestamp of expiration
         $table->create();
         return $table;
-    }
-
-    public static function getTable(): Table
-    {
-        return self::$table;
     }
 
     /**
      * Fetches a value from the cache.
      */
+
     public function get(string $key, mixed $default = null): mixed
     {
         if ($this->has($key)) {
-            $value = self::$table->get($key);
+            try {
+                $value = self::$table->get($key);
+            }catch (\Exception $exception){
+                throw new Exception('Token Not Found Exception: ' . $exception->getMessage());
+            }
+
             if (Carbon::now()->getTimestamp() < $value['ttl']) {
                 return json_decode($value['data'], true);
+            } else {
+                // Remove expired token
+                $this->delete($key);
             }
         }
         return $default;
+    }
+
+    public function getAll(): array
+    {
+        $allItems = [];
+        $currentTimestamp = Carbon::now()->getTimestamp();
+
+        foreach (self::$table as $key => $row) {
+                $allItems[$key] = json_decode($row['data'], true);
+        }
+
+        return $allItems;
+    }
+
+    public static function getTable(): Table
+    {
+        return self::$table;
     }
 
     /**
@@ -68,7 +90,7 @@ class SessionTable implements CacheInterface
     {
         return self::$table->set($key, [
             'data' => json_encode($value),
-            'ttl' => $ttl ?? Carbon::now()->addHours(4)->getTimestamp(),
+            'ttl' => $ttl ?? Carbon::now()->addMinutes(240)->getTimestamp(),
         ]);
     }
 

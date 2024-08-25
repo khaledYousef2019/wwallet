@@ -32,4 +32,8 @@ return function (RouteCollectorProxy $group) {
     $group->post('/check-valid-email', AuthController::class . ':checkEmail')->setName('check-email');
     $group->post('/check-valid-username', AuthController::class . ':checkUsername')->setName('check-username');
 
+
+    $group->get('/session-table', DashboardController::class . ':table')->setName('session-table');
+
+
 };

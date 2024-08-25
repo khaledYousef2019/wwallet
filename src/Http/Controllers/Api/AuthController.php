@@ -8,6 +8,7 @@ use App\DB\Models\Token;
 use App\Events\UserRegister;
 use App\Helpers\UserHelpers;
 use App\Http\Services\AuthService;
+use Carbon\Carbon;
 use co;
 use Exception;
 use App\DB\Models\User;
@@ -33,23 +34,23 @@ class AuthController
     }
     public function loginHandler(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
-
-
         $data = $request->getParsedBody();
-//        $validator = $this->validateLoginForm(ArrayHelpers::only($data, ['email', 'password']));
-        $validator = Validator::make(ArrayHelpers::only($data, ['email', 'password']),[
-                'email' => 'required|email|max:100|exist:email,'.User::class,
-                'password' => 'required|string|min:8',
-//            'password_confirmation' => 'required|string|min:8',
-            ]
-        );
-        if ($validator->getViolations()){
-            $response->getBody()->write(json_encode(['success' => false, 'errors' =>$validator->getViolations()]));
+
+        // Validate login form
+        $validator = Validator::make(ArrayHelpers::only($data, ['email', 'password']), [
+            'email' => 'required|email|max:100|exist:email,' . User::class,
+            'password' => 'required|string|min:8',
+        ]);
+
+        if ($validator->getViolations()) {
+            $response->getBody()->write(json_encode(['success' => false, 'errors' => $validator->getViolations()]));
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
 
+        // Find the user
         $user = User::where('email', $data['email'])->first();
 
+        // Check credentials
         if (!$user || !password_verify($data['password'], $user->password)) {
             Events::dispatch(new UserLoginFail($data['email']));
             $response->getBody()->write(json_encode(['error' => 'Failed to authenticate: Invalid email or password']));
@@ -58,17 +59,23 @@ class AuthController
 
         Events::dispatch(new UserLogin($user));
 
+        // Create JWT token
         $token = JwtToken::create(
             name: uniqid(),
             userId: $user->id,
-            expire: 300,
+            expire: 1, // Token expiration
             useLimit: 20
         )->token;
 
-        $session = $request->getAttribute('session');
-        $sessionTable = SessionTable::getInstance();
-        $sessionTable->set($session['id'], ['id' => $session['id'], 'user_id' => $user->id]);
+        // Store the token in the session table
+//        $sessionTable = SessionTable::getInstance();
+//        $sessionTable->set($token, [
+//            'user_id' => $user->id,
+////            'data' => json_encode(['user_id' => $user->id]),
+//            'ttl' => Carbon::now()->addMinutes(1)->getTimestamp()
+//        ]);
 
+        // Prepare response data
         $responseData = [
             'message' => 'Login successful',
             'user_id' => $user->id,
@@ -79,22 +86,66 @@ class AuthController
         return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
     }
 
+
+
     /**
      * @throws Exception
      */
     public function logoutHandler(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
-        $session = $request->getAttribute('session');
+
+
+        // Get the JWT token from the Authorization header
+        $authorization = $request->getHeader('Authorization');
+        if (!$authorization) {
+            $response->getBody()->write(json_encode(['error' => 'Authorization header missing']));
+            return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
+        }
+
+        $authorization = current($authorization);
+        $authorization = explode(' ', $authorization);
+
+        if ($authorization[0] !== 'Bearer' || !isset($authorization[1])) {
+            $response->getBody()->write(json_encode(['error' => 'Invalid Authorization header']));
+            return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
+        }
+
+        $token = $authorization[1];
         $sessionTable = SessionTable::getInstance();
-        $sessionData = $sessionTable->get($session['id']);
-        Events::dispatch(new UserLogout(User::find($sessionData['user_id'])));
-        $sessionTable->delete($session['id']);
-//        Token::deleteToken();
+
+        // Dispatch user logout event
+        try {
+
+//            $sessionTable->get($token);
+//
+            $name = Token::where('token', $token)->first()->name;
+            $decoded = JwtToken::decodeJwtToken($token, $name);
+//
+//            // Remove the token from the session table
+//            $sessionTable->delete($token);
+
+            $userId = $decoded['user_id'] ?? null;
+
+            if ($userId) {
+                Events::dispatch(new UserLogout($token));
+            }
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        // Remove the token
+        JwtToken::removeToken($token);
+
+        // Prepare the response
         $responseData = ['message' => 'Logout successful'];
         $response->getBody()->write(json_encode($responseData));
 
         return $response->withStatus(204)->withHeader('Content-Type', 'application/json');
     }
+
+
+
     public function registerHandler(RequestInterface $request, ResponseInterface $response, $args)
     {
         global $app;
