@@ -11,6 +11,6 @@ use Carbon\Carbon;
 class UserLogoutListener
 {
     public function handle(UserLogout $event): void{
-        Events::dispatch(new TokenChanged($event->token, 'deleted'));
+//        Events::dispatch(new TokenChanged($event->token, 'deleted'));
     }
 }

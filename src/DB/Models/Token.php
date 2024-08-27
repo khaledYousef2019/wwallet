@@ -18,6 +18,8 @@ class Token extends Model
         'expire_at',
         'token',
         'uses',
+        'ip',
+        'device',
         'use_limit',
     ];
     // Add casts to ensure correct types

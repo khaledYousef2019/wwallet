@@ -133,7 +133,7 @@ class Validator
                     ], $fieldName . ' is already existed.');
 
                     break;
-                case 'exist':
+                case 'exists':
                     if (count($parameters) < 2) {
                         throw new \InvalidArgumentException("Validation rule 'exist' requires at least two parameter (table name).");
                     }

@@ -39,8 +39,14 @@ class AuthorizationMiddleware
         $token = $authorization[1];
 
         try {
+            // Get the token name from JwtToken service
+            $jwtToken = JwtToken::getToken($request);
+            if (!$jwtToken || !isset($jwtToken->name)) {
+                return $this->unauthorizedResponse('Invalid token or token name missing');
+            }
+
             // Decode the token to get user information
-            $decoded = JwtToken::decodeJwtToken($token, JwtToken::getToken($request)->name);
+            $decoded = JwtToken::decodeJwtToken($token, $jwtToken->name);
             $userId = $decoded['user_id'] ?? null;
 
             if (!$userId) {

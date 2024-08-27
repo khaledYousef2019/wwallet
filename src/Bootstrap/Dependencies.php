@@ -7,6 +7,7 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Psr\Http\Message\ResponseInterface;
 use Slim\App as SlimApp;
 
 class Dependencies
@@ -17,6 +18,7 @@ class Dependencies
         self::registerErrorHandlers();
         self::registerDbCapsule($app);
         self::registerFilesystem($app);
+        self::registerJsonResponse();
     }
 
     private static function registerLogger(SlimApp $app)
@@ -27,7 +29,22 @@ class Dependencies
             return $logger;
         });
     }
+    private static function registerJsonResponse(SlimApp $app)
+    {
+        $app->getContainer()->set('jsonResponse', function () use ($app) {
+            return function ($data, int $status = 200, array $headers = []) use ($app) {
+                $response = $app->getContainer()->get(ResponseInterface::class);
+                $payload = json_encode($data);
 
+                $response->getBody()->write($payload);
+                foreach ($headers as $key => $value) {
+                    $response = $response->withHeader($key, $value);
+                }
+
+                return $response->withStatus($status)->withHeader('Content-Type', 'application/json');
+            };
+        });
+    }
     private static function registerErrorHandlers()
     {
         // Prevent errors from being displayed in the console

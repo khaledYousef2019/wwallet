@@ -73,7 +73,7 @@ class JwtToken
      * @param ?int $useLimit Uses limit number for token. Null for no limit.
      * @return Token
      */
-    public static function create(string $name, int $userId, ?int $expire, ?int $useLimit = null): Token
+    public static function create(string $name, int $userId, ?string $ip, ?string $device , ?int $expire, ?int $useLimit = null): Token
     {
         if (null !== $expire) {
             $expire = Carbon::now()->addMinutes($expire);
@@ -87,6 +87,8 @@ class JwtToken
         $tokenData = [
             'name' => $name,
             'user_id' => $userId,
+            'ip' => $ip,
+            'device' => $device,
             'expire_at' => null,
         ];
 
@@ -112,13 +114,9 @@ class JwtToken
      * @param string $token
      * @return void
      */
-    public static function removeToken(string $token): void
+    public static function removeToken(Token $token): void
     {
-        $tokenRecord = Token::where('token', $token)->first();
-        if ($tokenRecord) {
-            // Dispatch TokenChanged event
-            Events::dispatch(new TokenChanged($tokenRecord, 'deleted'));
-            $tokenRecord->delete();
-        }
+        Events::dispatch(new TokenChanged($token, 'deleted'));
+        $token->delete();
     }
 }

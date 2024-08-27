@@ -23,17 +23,17 @@ return function (RouteCollectorProxy $group) {
 
     // Group for routes requiring authorization (login and logout)
     $group->group('', function (RouteCollectorProxy $group) {
-        $group->post('/register', AuthController::class . ':registerHandler')->setName('register-handler');
         $group->post('/login', AuthController::class . ':loginHandler')->setName('login-handler');
         $group->post('/logout', AuthController::class . ':logoutHandler')->setName('logout-handler');
 
     })->add(new AuthorizationMiddleware)->add(new SessionMiddleware);
 
+    $group->post('/register', AuthController::class . ':registerHandler')->setName('register-handler');
     $group->post('/check-valid-email', AuthController::class . ':checkEmail')->setName('check-email');
     $group->post('/check-valid-username', AuthController::class . ':checkUsername')->setName('check-username');
 
 
-    $group->get('/session-table', DashboardController::class . ':table')->setName('session-table');
+    $group->post('/session-table', DashboardController::class . ':table')->setName('session-table');
 
 
 };

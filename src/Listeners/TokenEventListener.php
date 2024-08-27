@@ -16,6 +16,8 @@ class TokenEventListener
 
             $sessionTable->set($event->token->token, [
                 'user_id' => $event->token->user_id,
+                'device' => $event->token->device,
+                'ip' => $event->token->ip,
                 'ttl' => Carbon::now()->addMinutes(1)->getTimestamp()
             ]);
         } elseif ($event->action === 'deleted') {

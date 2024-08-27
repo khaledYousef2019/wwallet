@@ -8,6 +8,7 @@ use App\Events\TokenChanged;
 use App\Http\Middlewares\NotFoundHandlerMiddleware;
 use App\Listeners\FetchCurrencyInfoListener;
 use App\Listeners\TokenEventListener;
+use App\Listeners\UserLogoutListener;
 use DI\Container;
 use Ilex\SwoolePsr7\SwooleServerRequestConverter;
 use App\Commands\GenerateFactory;
@@ -104,7 +105,7 @@ class App
 //        Events::addListener(UserLogout::class, function(EventInterface $event) use ($container) {
 //            $container->get('logger')->info('User logout: ' . $event->user->name);
 //        });
-        Events::addListener(UserLogout::class, [new UserLogoutListenerUserLogoutListener(), 'handle']);
+        Events::addListener(UserLogout::class, [new UserLogoutListener(), 'handle']);
 
         Events::addListener(UserLoginFail::class, function(EventInterface $event) use ($container) {
             $container->get('logger')->info('Login attempt fail: ' . $event->email);

@@ -30,7 +30,9 @@ class DashboardController
 
     public function table(RequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $table = SessionTable::getInstance()->getAll();
+        $data = $request->getParsedBody();
+
+        $table = SessionTable::getInstance()->get($data['token']);
         $response->getBody()->write(json_encode($table));
         return $response;
     }

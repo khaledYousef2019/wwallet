@@ -43,7 +43,8 @@
             "OpenSwoole\\Core\\": "vendor/openswoole/core/src/"
         },
         "files": [
-            "src/Helpers/coreconstant.php"
+            "src/Helpers/coreconstant.php",
+            "src/Helpers/functions.php"
         ]
     }
 }

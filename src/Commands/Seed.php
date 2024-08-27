@@ -6,20 +6,20 @@ use App\DB\Models\ContactDetails;
 use App\DB\Models\PersonalDetails;
 use Exception;
 use App\DB\Models\User;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+#[AsCommand(name: 'seed', description: 'Executes seed for the database.')]
+
 class Seed extends Command
 {
-    protected static $defaultName = 'seed';
-
-    protected static $defaultDescription = 'Executes seed for the database.';
 
     protected function configure(): void
     {
-        $this->setHelp(self::$defaultDescription);
+        $this->setHelp($this->getDescription());
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

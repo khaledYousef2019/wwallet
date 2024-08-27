@@ -15,11 +15,10 @@ use Symfony\Component\Console\Attribute\AsCommand;
 class HttpServer extends Command
 {
 
-    protected static $defaultDescription = 'Starts Http Server';
 
     protected function configure(): void
     {
-        $this->setHelp(self::$defaultDescription);
+        $this->setHelp($this->getDescription());
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

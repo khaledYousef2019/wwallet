@@ -3,21 +3,21 @@
 namespace App\Commands;
 
 use Mustache_Engine;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+#[AsCommand(name: 'generate:factory', description: 'Generates a model\'s factory.')]
+
 class GenerateFactory extends Command
 {
-    protected static $defaultName = 'generate:factory';
-
-    protected static $defaultDescription = 'Generates a model\'s factory.';
 
     protected function configure(): void
     {
-        $this->setHelp(self::$defaultDescription)
+        $this->setHelp($this->getDescription())
             ->addOption('model', 'm', InputOption::VALUE_REQUIRED, 'The model you are creating this factory for.');
     }
 

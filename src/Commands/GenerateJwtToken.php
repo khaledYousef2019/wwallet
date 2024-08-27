@@ -10,6 +10,7 @@ use App\DB\Models\User;
 use App\Rules\RecordExist;
 use App\Services\JwtToken;
 use App\Services\Validator;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,16 +21,16 @@ use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Type;
 
+#[AsCommand(name: 'generate:jwt-token', description: 'Generates a JWT Token for a user.')]
+
 class GenerateJwtToken extends Command
 {
-    protected static $defaultName = 'generate:jwt-token';
 
-    protected static $defaultDescription = 'Generates a JWT Token for a user.';
 
     protected function configure(): void
     {
         $this
-            ->setHelp(self::$defaultDescription)
+            ->setHelp($this->getDescription())
             ->setDefinition(
                 new InputDefinition([
                     new InputOption('name', null, InputOption::VALUE_REQUIRED, 'The name of the JWT token.'),
