@@ -73,11 +73,9 @@ class JwtToken
      * @param ?int $useLimit Uses limit number for token. Null for no limit.
      * @return Token
      */
-    public static function create(string $name, int $userId, ?string $ip, ?string $device , ?int $expire, ?int $useLimit = null): Token
+    public static function create(string $name, int $userId, ?string $ip, ?string $device , ?int $expire = TOKEN_EXPIRATION, ?int $useLimit = null): Token
     {
-        if (null !== $expire) {
-            $expire = Carbon::now()->addMinutes($expire);
-        }
+        $expire = Carbon::now()->addMinutes($expire);
 
         $payload = [
             "iat" => Carbon::now()->timestamp,
@@ -89,7 +87,7 @@ class JwtToken
             'user_id' => $userId,
             'ip' => $ip,
             'device' => $device,
-            'expire_at' => null,
+            'expire_at' => $expire,
         ];
 
         if (null !== $expire) {

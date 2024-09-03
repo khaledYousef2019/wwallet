@@ -2,6 +2,7 @@
 
 namespace App\Http\Services;
 
+use App\DB\Models\Token;
 use App\DB\Models\User;
 use App\Events\UserLogin;
 use App\Events\UserLoginFail;
@@ -19,18 +20,18 @@ use PHPMailer\PHPMailer\PHPMailer;
 class AuthService
 {
     private LoginAttemptsTable $loginAttemptsTable;
-//    private SessionTable $sessionTable;
+    private SessionTable $sessionTable;
 
     public function __construct()
     {
         $this->loginAttemptsTable = LoginAttemptsTable::getInstance();
-//        $this->sessionTable = SessionTable::getInstance();
+        $this->sessionTable = SessionTable::getInstance();
     }
 
     public function handleLogin(array $data, string $ipAddress, string $device): array
     {
         // Rate limiting: 5 attempts per minute
-        $rateLimitKey = 'login_attempts_' . $ipAddress;
+        $rateLimitKey = 'login_attempt_' . strtolower(trim($data['email'])) . '_' . $ipAddress;
         $attempts = $this->loginAttemptsTable->get($rateLimitKey) ?? 0;
 
         if ($attempts >= 5) {
@@ -58,16 +59,36 @@ class AuthService
             return ['status' => 401, 'message' => 'Failed to authenticate: Invalid email or password'];
         }
 
+        // Check for existing token with same IP address and device
+        $existingToken = Token::where('user_id', $user->id)
+            ->where('ip', $ipAddress)
+            ->where('device', $device)
+            ->first();
+
+        if ($existingToken && $this->sessionTable->get($existingToken->token)) {
+            return [
+                'status' => 200,
+                'message' => 'You are already logged in',
+                'data' => [
+                    'user_id' => $user->id,
+                    'token' => $existingToken->token
+                ]
+            ];
+        }
+
+        // Destroy any existing token with a different IP address
+//        Token::where('user_id', $user->id)
+//            ->where('ip', '!=', $ipAddress)
+//            ->delete();
+
         Events::dispatch(new UserLogin($user));
 
-        // Create JWT token
+        // Create a new JWT token
         $token = JwtToken::create(
             name: uniqid(),
             userId: $user->id,
             ip: $ipAddress,
             device: $device,
-            expire: Carbon::now()->addMinutes(15)->getTimestamp(),
-            useLimit: 1
         )->token;
 
         $this->loginAttemptsTable->reset($rateLimitKey); // Reset attempts on successful login
@@ -92,7 +113,6 @@ class AuthService
             $mailKey = $this->generateEmailVerificationKey();
             $user = User::create([
                 'username' => $request['first_name'],
-//                'last_name' => $request['last_name'],
                 'email' => $request['email'],
                 'role' => USER_ROLE_USER,
                 'password' => Hash::make($request['password']),
@@ -101,7 +121,6 @@ class AuthService
             DB::commit();
 
             if ($user) {
-//                $this->sendVerifyEmail($user, $mailKey);
                 $data = ['success' => true, 'data' => [], 'message' => 'Sign up successful, Please verify your mail'];
             } else {
                 $data = ['success' => false, 'data' => [], 'message' => 'Sign up failed'];

@@ -6,7 +6,7 @@
 const USER_ROLE_ADMIN = 1;
 const USER_ROLE_USER = 2;
 
-
+const TOKEN_EXPIRATION = 60;
 
 // Status
 const STATUS_PENDING = 0;
@@ -124,7 +124,5 @@ const CHECK_MAXIMUM_WITHDRAWAL = 5;
 const KYC_NID_REQUIRED = 1;
 const KYC_PASSPORT_REQUIRED = 2;
 const KYC_DRIVING_REQUIRED = 3;
-
-const TOKEN_EXPIRATION = 60;
 
 const TOKEN_USE_LIMIT = 60;

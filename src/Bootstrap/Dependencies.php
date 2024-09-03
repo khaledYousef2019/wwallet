@@ -18,7 +18,7 @@ class Dependencies
         self::registerErrorHandlers();
         self::registerDbCapsule($app);
         self::registerFilesystem($app);
-        self::registerJsonResponse();
+        self::registerJsonResponse($app);
     }
 
     private static function registerLogger(SlimApp $app)

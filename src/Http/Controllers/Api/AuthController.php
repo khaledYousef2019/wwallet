@@ -5,6 +5,7 @@ use App\DB\Models\ContactDetails;
 use App\DB\Models\PersonalDetails;
 use App\DB\Models\Token;
 use App\Events\UserRegister;
+use App\Helpers\TokenHelper;
 use App\Helpers\UserHelpers;
 use App\Http\Services\AuthService;
 use App\Services\LoginAttemptsTable;
@@ -24,7 +25,7 @@ use Psr\Http\Message\ResponseInterface;
 use Openswoole\Coroutine;
 use Symfony\Component\Console\Helper\Table;
 
-class AuthController
+class AuthController extends BaseController
 {
     protected $service;
     protected $rateLimitKeyPrefix = 'login_attempts_';
@@ -39,40 +40,24 @@ class AuthController
         $data = $request->getParsedBody();
         $ipAddress = $request->getServerParams()['REMOTE_ADDR'];
         $device = $request->getHeader('User-Agent')[0] ?? 'unknown';
-
         $result = $this->service->handleLogin($data, $ipAddress, $device);
+        return $this->jsonResponse($response, $result, $result['status']);
 
-        $response->getBody()->write(json_encode($result));
-        return $response->withStatus($result['status'])->withHeader('Content-Type', 'application/json');
     }
 
     public function logoutHandler(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
-        $authorization = $request->getHeader('Authorization');
-        if (!$authorization) {
-            $response->getBody()->write(json_encode(['error' => 'Authorization header missing']));
-            return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
-        }
-
-        $authorization = current($authorization);
-        $authorization = explode(' ', $authorization);
-
-        if ($authorization[0] !== 'Bearer' || !isset($authorization[1])) {
-            $response->getBody()->write(json_encode(['error' => 'Invalid Authorization header']));
-            return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
-        }
-
-        $tokenString = $authorization[1];
-        $sessionTable = SessionTable::getInstance();
-
         try {
-            $token = Token::where('token', $tokenString)->first();
-            if (!$token || !$token->name) {
-                throw new \Exception('Token not found or invalid');
-            }
+            $tokenString = TokenHelper::extractToken($request);
+            $decoded = TokenHelper::validateToken($tokenString);
 
-            $decoded = JwtToken::decodeJwtToken($token->token, $token->name);
             $userId = $decoded['user_id'] ?? null;
+            $sessionTable = SessionTable::getInstance();
+            $token = Token::where('token', $tokenString)->first();
+
+            if (!$token || !$token->name) {
+                throw new Exception('Token not found or invalid');
+            }
 
             // Remove the token
             JwtToken::removeToken($token);
@@ -80,81 +65,61 @@ class AuthController
             if ($userId) {
                 Events::dispatch(new UserLogout($token));
             }
+
+            return $this->jsonResponse($response, ['message' => 'Logout successful'], 204);
         } catch (Exception $e) {
-            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            return $this->jsonResponse($response, ['error' => $e->getMessage()], 400);
         }
-
-        $responseData = ['message' => 'Logout successful'];
-        $response->getBody()->write(json_encode($responseData));
-
-        return $response->withStatus(204)->withHeader('Content-Type', 'application/json');
     }
 
-    public function registerHandler(RequestInterface $request, ResponseInterface $response, $args)
+
+    public function registerHandler(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
         $data = $request->getParsedBody();
-        $validator = Validator::make(ArrayHelpers::only($data, ['email', 'password', 'username', 'password_confirmation']), [
+        $validator = Validator::make($data, [
             'username' => 'required|string|max:255|unique:username,' . User::class,
             'email' => 'required|email|max:100|unique:email,' . User::class,
-            'password' => 'required|string|min:8',
-        ]);
+            'password' => 'required|string|strong_password|min:8',
+            ]);
 
         if ($validator->getViolations()) {
-            $response->getBody()->write(json_encode(['success' => false, 'errors' => $validator->getViolations()]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            return $this->jsonResponse($response, ['success' => false, 'errors' => $validator->getViolations()], 400);
         }
 
         try {
             $result = $this->service->signUpProcess($data);
-
-            if ($result['success']) {
-                $response->getBody()->write(json_encode(['success' => true, 'message' => $result['message']]));
-                return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
-            } else {
-                $response->getBody()->write(json_encode(['success' => false, 'message' => $result['message']]));
-                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-            }
+            return $this->jsonResponse($response, ['success' => $result['success'], 'message' => $result['message']], $result['success'] ? 200 : 400);
         } catch (Exception $e) {
-            $response->getBody()->write(json_encode(['success' => false, 'error' => 'Failed to register: ' . $e->getMessage()]));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+            return $this->jsonResponse($response, ['success' => false, 'error' => 'Failed to register: ' . $e->getMessage()], 500);
         }
     }
 
     public function checkEmail(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
-        global $app;
-
         $data = $request->getParsedBody();
-        $validator = Validator::make(ArrayHelpers::only($data, ['email']), [
+        $validator = Validator::make($data, [
             'email' => 'required|email|max:100|unique:email,' . User::class,
         ]);
 
         if ($validator->getViolations()) {
-            $response->getBody()->write(json_encode(['success' => false, 'errors' => $validator->getViolations()]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            return $this->jsonResponse($response, ['success' => false, 'errors' => $validator->getViolations()], 400);
         }
 
-        $response->getBody()->write(json_encode(['success' => true, 'message' => 'Valid Email']));
-        return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        return $this->jsonResponse($response, ['success' => true, 'message' => 'Valid Email'],200);
     }
 
     public function checkUsername(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
-        global $app;
-
         $data = $request->getParsedBody();
-        $validator = Validator::make(ArrayHelpers::only($data, ['username']), [
+        $validator = Validator::make($data, [
             'username' => 'required|string|min:6|max:255|unique:username,' . User::class,
         ]);
 
         if ($validator->getViolations()) {
-            $response->getBody()->write(json_encode(['success' => false, 'errors' => $validator->getViolations()]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            return $this->jsonResponse($response, ['success' => false, 'errors' => $validator->getViolations()], 400);
         }
 
-        $response->getBody()->write(json_encode(['success' => true, 'message' => 'Valid Username']));
-        return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        return $this->jsonResponse($response, ['success' => true, 'message' => 'Valid Username'],200);
     }
 
     public function resendOtpHandler(RequestInterface $request, ResponseInterface $response, $args)
