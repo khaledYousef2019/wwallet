@@ -4,65 +4,29 @@ namespace App\Services;
 
 use App\Rules\RecordExist;
 use App\Rules\SameField;
-use Exception;
 use App\Rules\RecordUnique;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\EqualTo;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Constraints\Type;
 use Symfony\Component\Validator\Validation;
-
-//class Validator
-//{
-//    private array $violations;
-//    public function __construct($violations){
-//        $this->violations = $violations;
-//    }
-//
-//    /**
-//     * @param array $values
-//     * @param array $validationRules
-//     * @return Validator
-//     * @throws Exception
-//     */
-//    public static function validate(array $values, array $validationRules): Validator
-//    {
-//        $violations = [];
-//
-//        $validator = Validation::createValidator();
-//        foreach ($values as $key => $value) {
-//            $tempViolations = $validator->validate($value, $validationRules[$key]);
-//            $violations[$key] = [];
-//            foreach ($tempViolations as $v) {
-//                $violations[$key][] = $v->getMessage();
-//            }
-//        }
-//
-//        return new self($violations);
-//    }
-//    public function failedValidation(): bool
-//    {
-//        return (count($this->violations) > 0);
-//    }
-//    public function getViolations(): array{
-//        return array_filter($this->violations, function ($value) {
-//            return !empty($value);
-//        });
-//    }
-//}
 
 class Validator
 {
     private array $violations;
 
-    public function __construct($violations)
+    public function __construct(array $violations)
     {
         $this->violations = $violations;
     }
 
     public static function make(array $data, array $rules): Validator
     {
+        // Sanitize input data
+        $data = self::sanitizeInput($data);
+
         $violations = [];
 
         $validator = Validation::createValidator();
@@ -131,9 +95,8 @@ class Validator
                         'model' => $modelName,
                         'field' => $fieldName
                     ], $fieldName . ' is already existed.');
-
                     break;
-                case 'exist':
+                case 'exists':
                     if (count($parameters) < 2) {
                         throw new \InvalidArgumentException("Validation rule 'exist' requires at least two parameter (table name).");
                     }
@@ -142,7 +105,13 @@ class Validator
                     $constraints[] = new RecordExist([
                         'model' => $modelName,
                         'field' => $fieldName
-                    ], 'This '.$fieldName . ' is Not Existed.');
+                    ], 'This ' . $fieldName . ' is Not Existed.');
+                    break;
+                case 'strong_password':
+                    $constraints[] = new Regex([
+                        'pattern' => '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/',
+                        'message' => 'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one digit, and one special character.'
+                    ]);
                     break;
                 default:
                     throw new \InvalidArgumentException("Unsupported validation rule: $ruleName");
@@ -150,5 +119,19 @@ class Validator
         }
 
         return $constraints;
+    }
+
+    private static function sanitizeInput(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_string($value)) {
+                // Basic sanitization: strip tags, trim whitespace, and encode for output
+                $data[$key] = htmlspecialchars(trim(strip_tags($value)), ENT_QUOTES, 'UTF-8');
+            } elseif (is_array($value)) {
+                // Recursively sanitize nested arrays
+                $data[$key] = self::sanitizeInput($value);
+            }
+        }
+        return $data;
     }
 }

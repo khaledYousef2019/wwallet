@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\DB\Models\ActivityLog;
 use App\DB\Models\UserDevices;
 use Jenssegers\Agent\Agent;
+use Psr\Http\Message\RequestInterface;
 use Torann\GeoIP\GeoIP;
 
 class UserHelpers
@@ -22,13 +23,10 @@ class UserHelpers
     public static function isGuest() : bool{
         return session_status() === PHP_SESSION_ACTIVE;
     }
-    public static function get_clientIp()
-    {
-        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    }
+
     public static function createUserActivity($userId, $action = ''): bool
     {
-        $current_ip = self::get_clientIp();
+        $current_ip = get_clientIp();
         $agent = new Agent();
         $deviceType = $agent->isMobile() ? 'Mobile' : 'Web';
 
@@ -46,6 +44,7 @@ class UserHelpers
         $activity['location'] = '';
         return (bool)ActivityLog::create($activity);
     }
+
     public static function AddUserDevice($userId): bool
     {
         $agent = new Agent();

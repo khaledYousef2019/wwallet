@@ -15,23 +15,22 @@ use App\DB\Models\PersonalDetails;
 use App\DB\Models\TwoFactorAuthentication;
 use App\DB\Models\UserDevices;
 use Slim\App;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+#[AsCommand(name: 'migrate', description: 'Executes migration for the database.')]
 
 class Migrate extends Command
 {
-    protected static $defaultName = 'migrate';
-
-    protected static $defaultDescription = 'Executes migration for the database.';
 
     protected function configure(): void
     {
         $this
-            ->setHelp(self::$defaultDescription)
+            ->setHelp($this->getDescription())
             ->setDefinition(
                 new InputDefinition([
                     new InputOption('fresh', null, InputOption::VALUE_NONE, 'Set the migration to remove existent tables and recreate them.'),
@@ -52,8 +51,8 @@ class Migrate extends Command
             $this->migrateTwoFactorAuthentication($input, $io);
             $this->migrateUserActivityLogs($input, $io);
             $this->migrateAdminNotifications($input, $io);
-            $this->migrateCurrencies($input, $io);
-            $this->migrateWallets($input, $io);
+//            $this->migrateCurrencies($input, $io);
+//            $this->migrateWallets($input, $io);
         } catch (Exception $e) {
             if (!$input->getOption('quiet')) {
                 $io->error('There was an error while running migrations: ' . $e->getMessage());
@@ -384,10 +383,12 @@ class Migrate extends Command
                 $table->bigIncrements('id');
                 $table->foreignId('user_id')->constrained()->onDelete('cascade');
                 $table->string('name', 40);
-                $table->dateTime('expire_at')->nullable();
                 $table->string('token', 150);
+                $table->string('ip', 150)->nullable();
+                $table->string('device', 150)->nullable();
                 $table->integer('uses')->default(0);
                 $table->integer('use_limit')->default(0);
+                $table->dateTime('expire_at')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
                 $table->index('user_id');

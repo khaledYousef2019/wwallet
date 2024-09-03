@@ -12,23 +12,21 @@ use OpenSwoole\Http\Response;
 use OpenSwoole\Table;
 use OpenSwoole\WebSocket\Frame;
 use OpenSwoole\WebSocket\Server;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+#[AsCommand(name: 'ws-server', description: 'Starts WebSocket Server')]
 class WebSocketServer extends Command
 {
-    protected static $defaultName = 'ws-server';
-
-    protected static $defaultDescription = 'Starts WebSocket Server';
-
     protected Table $userTable;
 
     protected function configure(): void
     {
-        $this->setHelp(self::$defaultDescription)
+        $this->setHelp($this->getDescription())
             ->setDefinition([
                 new InputOption('port', null, InputOption::VALUE_OPTIONAL, 'Specify the Port for the Websocket Server.', 8080),
                 new InputOption('http', null, InputOption::VALUE_NONE, 'Specify that the Websocket Server will also Serve HTTP Requests.'),
@@ -50,7 +48,7 @@ class WebSocketServer extends Command
     {
         global $app, $requestConverter;
 
-        $this->startUserTable();
+//        $this->startUserTable();
 
         $app->getContainer()->set('ws-context', [
             'port' => $port,
@@ -80,7 +78,6 @@ class WebSocketServer extends Command
                 $io->error('Failed to connect: ' . $request->fd);
                 return;
             }
-
             $io->info('Connection open: ' . $request->fd);
         });
 
@@ -150,13 +147,13 @@ class WebSocketServer extends Command
         ]);
     }
 
-    private function startUserTable()
-    {
-        // the id of the row will be the "fd"
-        $userTable = new Table(1024);
-        $userTable->column('user_id', Table::TYPE_INT, 4);
-        $userTable->column('user_name', Table::TYPE_STRING, 40);
-        $userTable->create();
-        $this->userTable = $userTable;
-    }
+//    private function startUserTable()
+//    {
+//        // the id of the row will be the "fd"
+//        $userTable = new Table(1024);
+//        $userTable->column('user_id', Table::TYPE_INT, 4);
+//        $userTable->column('user_name', Table::TYPE_STRING, 40);
+//        $userTable->create();
+//        $this->userTable = $userTable;
+//    }
 }

@@ -11,7 +11,7 @@ class UserLogout implements EventInterface
      * @throws \Exception
      */
     public function __construct(
-        public User $user
+        public Token $token
     ) {
 //        Token::deleteToken($token);
     }

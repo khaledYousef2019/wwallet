@@ -1,14 +1,15 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
 use App\DB\Models\ContactDetails;
 use App\DB\Models\PersonalDetails;
 use App\DB\Models\Token;
 use App\Events\UserRegister;
+use App\Helpers\TokenHelper;
 use App\Helpers\UserHelpers;
 use App\Http\Services\AuthService;
-use co;
+use App\Services\LoginAttemptsTable;
+use Carbon\Carbon;
 use Exception;
 use App\DB\Models\User;
 use App\Events\UserLogin;
@@ -21,163 +22,118 @@ use App\Services\SessionTable;
 use App\Services\Validator;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Openswoole\Coroutine;
+use Symfony\Component\Console\Helper\Table;
 
-
-class AuthController
+class AuthController extends BaseController
 {
-
     protected $service;
-    function __construct()
+    protected $rateLimitKeyPrefix = 'login_attempts_';
+
+    public function __construct()
     {
         $this->service = new AuthService();
     }
+
     public function loginHandler(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
-
-
         $data = $request->getParsedBody();
-//        $validator = $this->validateLoginForm(ArrayHelpers::only($data, ['email', 'password']));
-        $validator = Validator::make(ArrayHelpers::only($data, ['email', 'password']),[
-                'email' => 'required|email|max:100|exist:email,'.User::class,
-                'password' => 'required|string|min:8',
-//            'password_confirmation' => 'required|string|min:8',
-            ]
-        );
-        if ($validator->getViolations()){
-            $response->getBody()->write(json_encode(['success' => false, 'errors' =>$validator->getViolations()]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-        }
+        $ipAddress = $request->getServerParams()['REMOTE_ADDR'];
+        $device = $request->getHeader('User-Agent')[0] ?? 'unknown';
+        $result = $this->service->handleLogin($data, $ipAddress, $device);
+        return $this->jsonResponse($response, $result, $result['status']);
 
-        $user = User::where('email', $data['email'])->first();
-
-        if (!$user || !password_verify($data['password'], $user->password)) {
-            Events::dispatch(new UserLoginFail($data['email']));
-            $response->getBody()->write(json_encode(['error' => 'Failed to authenticate: Invalid email or password']));
-            return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
-        }
-
-        Events::dispatch(new UserLogin($user));
-
-        $token = JwtToken::create(
-            name: uniqid(),
-            userId: $user->id,
-            expire: 300,
-            useLimit: 20
-        )->token;
-
-        $session = $request->getAttribute('session');
-        $sessionTable = SessionTable::getInstance();
-        $sessionTable->set($session['id'], ['id' => $session['id'], 'user_id' => $user->id]);
-
-        $responseData = [
-            'message' => 'Login successful',
-            'user_id' => $user->id,
-            'token' => $token
-        ];
-
-        $response->getBody()->write(json_encode(['data' => $responseData]));
-        return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
     }
 
-    /**
-     * @throws Exception
-     */
     public function logoutHandler(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
-        $session = $request->getAttribute('session');
-        $sessionTable = SessionTable::getInstance();
-        $sessionData = $sessionTable->get($session['id']);
-        Events::dispatch(new UserLogout(User::find($sessionData['user_id'])));
-        $sessionTable->delete($session['id']);
-//        Token::deleteToken();
-        $responseData = ['message' => 'Logout successful'];
-        $response->getBody()->write(json_encode($responseData));
-
-        return $response->withStatus(204)->withHeader('Content-Type', 'application/json');
-    }
-    public function registerHandler(RequestInterface $request, ResponseInterface $response, $args)
-    {
-        global $app;
-
-        $data = $request->getParsedBody();
-        $validator = Validator::make(ArrayHelpers::only($data, ['email', 'password','username','password_confirmation']),[
-            'username' => 'required|string|max:255|unique:username,'.User::class,
-            'email' => 'required|email|max:100|unique:email,'.User::class,
-            'password' => 'required|string|min:8',
-//            'password_confirmation' => 'required|string|min:8',
-            ]
-        );
-        if ($validator->getViolations()){
-            $response->getBody()->write(json_encode(['success' => false, 'errors' =>$validator->getViolations()]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-        }
         try {
-            $user = User::create([
-                'email' => $data['email'],
-                'password' => password_hash($data['password'], PASSWORD_DEFAULT),
-                'username' => $data['username'],
-                'role' => USER_ROLE_USER
-            ]);
-//            ContactDetails::create([
-//                'user_id' => $user->id,
-//                'country' => $data['country'],
-//                'city' => $data['city'],
-//                'street' => $data['street'],
-//                'postal_code' => $data['postal_code'],
-//                'phone' => $data['phone'],
-//                'country_code' => $data['country_code']
-//            ]);
-//            PersonalDetails::create([
-//                'user_id' => $user->id,
-//                'first_name' => $data['first_name'],
-//                'last_name' => $data['last_name'],
-//                'birth_date' => $data['birthday'],
-//                'gender' => $data['gender'],
-//                'photo' => $data['photo'],
-//            ]);
+            $tokenString = TokenHelper::extractToken($request);
+            $decoded = TokenHelper::validateToken($tokenString);
 
+            $userId = $decoded['user_id'] ?? null;
+            $sessionTable = SessionTable::getInstance();
+            $token = Token::where('token', $tokenString)->first();
 
-            Events::dispatch(new UserRegister($user));
-            $response->getBody()->write(json_encode(['success' => true,'message' => 'Sign up successful, Please verify your mail']));
-            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+            if (!$token || !$token->name) {
+                throw new Exception('Token not found or invalid');
+            }
+
+            // Remove the token
+            JwtToken::removeToken($token);
+
+            if ($userId) {
+                Events::dispatch(new UserLogout($token));
+            }
+
+            return $this->jsonResponse($response, ['message' => 'Logout successful'], 204);
         } catch (Exception $e) {
-            $app->getContainer()->get('logger')->error('Error In System ' . $e->getMessage());
-            $response->getBody()->write(json_encode(['success' => false,'error' => 'Failed to register '. $e->getMessage()]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            return $this->jsonResponse($response, ['error' => $e->getMessage()], 400);
+        }
+    }
+
+
+    public function registerHandler(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
+    {
+        $data = $request->getParsedBody();
+        $validator = Validator::make($data, [
+            'username' => 'required|string|max:255|unique:username,' . User::class,
+            'email' => 'required|email|max:100|unique:email,' . User::class,
+            'password' => 'required|string|strong_password|min:8',
+            ]);
+
+        if ($validator->getViolations()) {
+            return $this->jsonResponse($response, ['success' => false, 'errors' => $validator->getViolations()], 400);
+        }
+
+        try {
+            $result = $this->service->signUpProcess($data);
+            return $this->jsonResponse($response, ['success' => $result['success'], 'message' => $result['message']], $result['success'] ? 200 : 400);
+        } catch (Exception $e) {
+            return $this->jsonResponse($response, ['success' => false, 'error' => 'Failed to register: ' . $e->getMessage()], 500);
         }
     }
 
     public function checkEmail(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
-        global $app;
-
         $data = $request->getParsedBody();
-        $validator = Validator::make(ArrayHelpers::only($data, ['email', 'password','username','password_confirmation']),[
-                'email' => 'required|email|max:100|unique:email,'.User::class,
-            ]
-        );
-        if ($validator->getViolations()){
-            $response->getBody()->write(json_encode(['success' => false, 'errors' =>$validator->getViolations()]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        $validator = Validator::make($data, [
+            'email' => 'required|email|max:100|unique:email,' . User::class,
+        ]);
+
+        if ($validator->getViolations()) {
+            return $this->jsonResponse($response, ['success' => false, 'errors' => $validator->getViolations()], 400);
         }
-        $response->getBody()->write(json_encode(['success' => true, 'message' => 'Valid Email']));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+
+        return $this->jsonResponse($response, ['success' => true, 'message' => 'Valid Email'],200);
     }
 
     public function checkUsername(RequestInterface $request, ResponseInterface $response, $args): ResponseInterface
     {
-        global $app;
-
         $data = $request->getParsedBody();
-        $validator = Validator::make(ArrayHelpers::only($data, ['email', 'password','username','password_confirmation']),[
-                'username' => 'required|string|min:6|max:255|unique:username,'.User::class,
-            ]
-        );
-        if ($validator->getViolations()){
-            $response->getBody()->write(json_encode(['success' => false, 'errors' =>$validator->getViolations()]));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        $validator = Validator::make($data, [
+            'username' => 'required|string|min:6|max:255|unique:username,' . User::class,
+        ]);
+
+        if ($validator->getViolations()) {
+            return $this->jsonResponse($response, ['success' => false, 'errors' => $validator->getViolations()], 400);
         }
-        $response->getBody()->write(json_encode(['success' => true, 'message' => 'Valid Username']));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+
+        return $this->jsonResponse($response, ['success' => true, 'message' => 'Valid Username'],200);
+    }
+
+    public function resendOtpHandler(RequestInterface $request, ResponseInterface $response, $args)
+    {
+        // Logic to handle resending OTP
+    }
+
+    public function verifyOtpHandler(RequestInterface $request, ResponseInterface $response, $args)
+    {
+        // Logic to handle OTP verification
+    }
+
+    public function forgotPasswordHandler(RequestInterface $request, ResponseInterface $response, $args)
+    {
+        // Logic to handle forgot password
     }
 }
